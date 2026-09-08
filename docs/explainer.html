@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Futures Curve Intelligence Engine — Complete Explainer</title>
+<style>
+  @page { size: A4; margin: 20mm 18mm; }
+  * { box-sizing: border-box; }
+  html { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  body {
+    font: 10.5pt/1.5 "Georgia", "Times New Roman", serif;
+    color: #1a1a1a; max-width: 190mm; margin: 0 auto; padding: 0;
+  }
+  h1 { font: 700 24pt/1.2 "Helvetica Neue", Arial, sans-serif; margin: 0 0 4pt; }
+  h2 { font: 700 15pt/1.25 "Helvetica Neue", Arial, sans-serif;
+       margin: 26pt 0 8pt; padding-top: 8pt; border-top: 2px solid #222;
+       page-break-after: avoid; }
+  h3 { font: 700 11.5pt/1.3 "Helvetica Neue", Arial, sans-serif;
+       margin: 16pt 0 4pt; color: #111; page-break-after: avoid; }
+  h4 { font: 700 10.5pt/1.3 "Helvetica Neue", Arial, sans-serif; margin: 11pt 0 2pt; }
+  p { margin: 0 0 7pt; }
+  ul, ol { margin: 0 0 7pt; padding-left: 18pt; }
+  li { margin: 0 0 3pt; }
+  code, .mono { font: 9.5pt/1.4 "SF Mono", "Consolas", "Menlo", monospace;
+    background: #f2f2f2; padding: 0.5pt 3pt; border-radius: 3px; }
+  pre { background: #f5f5f5; border-left: 3px solid #999; padding: 8pt 10pt;
+    font: 9pt/1.45 "SF Mono","Consolas","Menlo",monospace; overflow-x: auto;
+    white-space: pre-wrap; margin: 6pt 0 9pt; page-break-inside: avoid; }
+  table { border-collapse: collapse; width: 100%; margin: 6pt 0 10pt;
+    font-size: 9.5pt; page-break-inside: avoid; }
+  th, td { border: 1px solid #bbb; padding: 4pt 6pt; text-align: left; vertical-align: top; }
+  th { background: #ececec; font-family: "Helvetica Neue", Arial, sans-serif; font-size: 9pt; }
+  .lead { font-size: 11pt; color: #333; }
+  .term { font-weight: 700; }
+  .use { display: block; margin-top: 2pt; padding-left: 10pt; border-left: 2px solid #4a90d9;
+    color: #234; font-size: 9.8pt; }
+  .use::before { content: "In this project: "; font-weight: 700; color: #4a90d9; }
+  .callout { background: #fbf7e8; border: 1px solid #e5d9a8; padding: 8pt 11pt;
+    margin: 9pt 0; border-radius: 4px; page-break-inside: avoid; }
+  .warn { background: #fdeee9; border-color: #eac4b3; }
+  .good { background: #ecf6ec; border-color: #b8dcb8; }
+  .toc { columns: 2; column-gap: 20pt; font-size: 9.5pt; margin: 10pt 0 0; }
+  .toc a { color: #234; text-decoration: none; }
+  .toc .l1 { font-weight: 700; display: block; margin-top: 6pt; }
+  .small { font-size: 8.7pt; color: #666; }
+  hr { border: 0; border-top: 1px solid #ccc; margin: 14pt 0; }
+  .pagebreak { page-break-before: always; }
+  header.cover { padding: 40mm 0 0; }
+  header.cover .sub { font: 400 13pt/1.4 "Helvetica Neue", Arial, sans-serif; color: #555; margin-top: 6pt; }
+  header.cover .meta { margin-top: 24pt; font-size: 9.5pt; color: #666; }
+  .kpi { font-family:"Helvetica Neue",Arial,sans-serif; }
+</style>
+</head>
+<body>
+
+<header class="cover">
+  <h1>Futures Curve Intelligence Engine</h1>
+  <div class="sub">A complete explainer — every term, what it means, how the engine uses it,<br>and whether the methods are actually profitable</div>
+  <div class="meta">
+    Markets: Gold (COMEX) · BTC · ETH (Deribit) &nbsp;|&nbsp; Built from the Multi-Market Futures Curve Intelligence Blueprint<br>
+    Status: Phase-1 research engine (blueprint §29 "Minimum Viable Quant Engine"), generalised to three markets<br>
+    Nature: research / decision-support. <strong>Not investment advice.</strong>
+  </div>
+</header>
+
+<div class="pagebreak"></div>
+<h2 id="toc">Contents</h2>
+<div class="toc">
+  <span class="l1"><a href="#intro">0 · What this is &amp; the central question</a></span>
+  <span class="l1"><a href="#partA">A · Market concepts</a></span>
+  <a href="#spot">A1 Spot &amp; futures</a><br>
+  <a href="#expiry">A2 Expiry &amp; convergence</a><br>
+  <a href="#longshort">A3 Long, short, margin, mark-to-market</a><br>
+  <a href="#settle">A4 Settlement: physical vs cash</a><br>
+  <a href="#basis">A5 Basis</a><br>
+  <a href="#carry">A6 Cost of carry (r, s, y, T)</a><br>
+  <a href="#contango">A7 Contango &amp; backwardation</a><br>
+  <a href="#calspread">A8 Calendar spread</a><br>
+  <a href="#curve">A9 Term structure / futures curve</a><br>
+  <a href="#lsc">A10 Level, slope, curvature</a><br>
+  <a href="#roll">A11 Roll yield / roll-down</a><br>
+  <a href="#conv">A12 Convenience yield</a><br>
+  <a href="#perp">A13 Perpetual swap &amp; funding rate</a><br>
+  <a href="#cbasis">A14 Perp basis &amp; quarterly basis</a><br>
+  <span class="l1"><a href="#partB">B · Statistics concepts</a></span>
+  <a href="#rolling">B1 Rolling window &amp; point-in-time</a><br>
+  <a href="#lookahead">B2 Look-ahead bias</a><br>
+  <a href="#zscore">B3 Z-score &amp; mean reversion</a><br>
+  <a href="#ou">B4 AR(1) / Ornstein-Uhlenbeck &amp; half-life</a><br>
+  <a href="#rv">B5 Realised volatility</a><br>
+  <a href="#regime">B6 Regime</a><br>
+  <a href="#r2">B7 R² (goodness of fit)</a><br>
+  <a href="#corr">B8 Correlation &amp; collinearity</a><br>
+  <a href="#pca">B9 PCA (factor structure)</a><br>
+  <span class="l1"><a href="#partC">C · Modelling concepts</a></span>
+  <a href="#fairvalue">C1 Fair value &amp; the carry fit</a><br>
+  <a href="#twoz">C2 z_hist vs z_fair — the key distinction</a><br>
+  <a href="#mldata">C3 Features, target, train/test, walk-forward</a><br>
+  <a href="#models">C4 OU, Ridge, Gradient Boosting</a><br>
+  <a href="#overfit">C5 Overfitting, regularisation, bias-variance</a><br>
+  <a href="#mlmetrics">C6 Hit rate, correlation, MAE</a><br>
+  <span class="l1"><a href="#partD">D · Trading concepts</a></span>
+  <a href="#sigcand">D1 Signal vs trade candidate</a><br>
+  <a href="#direction">D2 Direction: fade vs follow</a><br>
+  <a href="#costmodel">D3 Transaction-cost model</a><br>
+  <a href="#netedge">D4 Expected net edge, regime multiplier, model agreement</a><br>
+  <a href="#score">D5 Signal score</a><br>
+  <a href="#risk">D6 Position sizing, stop, max hold</a><br>
+  <a href="#harvest">D7 Harvest vs gated</a><br>
+  <span class="l1"><a href="#partE">E · Backtesting concepts</a></span>
+  <a href="#eventbt">E1 Event backtest &amp; walk-forward</a><br>
+  <a href="#biases">E2 The three biases</a><br>
+  <a href="#btmetrics">E3 Every backtest metric</a><br>
+  <span class="l1"><a href="#partF">F · The pipeline, module by module</a></span>
+  <span class="l1"><a href="#partG">G · Results — is it profitable?</a></span>
+  <span class="l1"><a href="#partH">H · How to use it</a></span>
+  <span class="l1"><a href="#partI">I · Limitations &amp; risks</a></span>
+  <span class="l1"><a href="#glossary">J · One-line glossary</a></span>
+</div>
+
+<div class="pagebreak"></div>
+<h2 id="intro">0 · What this is &amp; the central question</h2>
+<p class="lead">This project reconstructs the <em>futures curve</em> of an asset, works out what that curve
+<em>should</em> look like from the economics of carrying the asset through time, measures where the
+real curve deviates from that, checks whether the deviation is a genuine opportunity or just noise,
+and backtests the resulting trades with realistic costs.</p>
+
+<p>It deliberately follows a build order: <strong>data → contracts → curve → basis → calendar spreads →
+curve shape → fair value → deviation → z-score → prediction → regime → cost/liquidity → risk →
+signal → backtest → live monitoring.</strong></p>
+
+<div class="callout"><strong>The central research question is not</strong> "are two futures prices close?"
+It is: <em>given maturity, carry, market regime, liquidity and historical behaviour, is the current
+relationship materially different from its estimated fair relationship — and is there enough expected
+net edge to justify the risk and execution cost?</em></div>
+
+<p>Three markets are wired today: <strong>Gold</strong> (COMEX dated futures), and <strong>BTC</strong> and
+<strong>ETH</strong> (Deribit perpetual + dated futures, where the funding rate is the carry analogue).</p>
+
+<!-- ============================================================= -->
+<h2 id="partA">A · Market concepts</h2>
+
+<h3 id="spot">A1 · Spot &amp; futures</h3>
+<p><span class="term">Spot price</span> — the price to buy or sell the actual asset <em>right now</em>,
+for immediate delivery. "Spot gold $2,500" = one ounce changes hands today for $2,500.</p>
+<p><span class="term">Futures contract</span> — a standardised, exchange-traded agreement to buy or sell the
+asset at a <em>price locked in today</em> but with <em>settlement on a specified future date</em> (the
+expiry). Almost no cash moves today; you post <em>margin</em> (a good-faith deposit).</p>
+<p><span class="term">Futures price</span> — the current market price of one such contract for a particular
+maturity. A futures price is <strong>not</strong> a forecast of the future spot price; it is today's spot
+adjusted for the cost and benefit of carrying the asset until expiry (see A6).</p>
+<span class="use">Gold has no free live "cash" feed, so the nearest-dated contract is used as the spot
+anchor. Crypto <em>does</em> have a real spot index, so its basis is genuine.</span>
+
+<h3 id="expiry">A2 · Expiry &amp; convergence</h3>
+<p><span class="term">Expiry</span> — the date a contract settles. COMEX gold terminates trading on the
+third-to-last business day of the delivery month; Deribit crypto quarterlies settle on the last Friday.</p>
+<p><span class="term">Convergence</span> — as expiry approaches, a futures price is pulled toward the
+spot / settlement value, because there is less and less time left to "carry" the asset. At expiry the
+basis is zero.</p>
+<span class="use">Convergence is why the nearest contract is the best spot proxy for gold, and why the
+engine force-closes any position when its near leg is within ~8 days of expiry.</span>
+
+<h3 id="longshort">A3 · Long, short, margin, mark-to-market</h3>
+<p><span class="term">Long</span> a future = you have agreed to <em>buy</em> at the locked price; you profit
+if the futures price rises. <span class="term">Short</span> = you have agreed to <em>sell</em>; you profit
+if it falls. You can go short without owning the asset.</p>
+<p><span class="term">Margin</span> — the deposit the exchange holds against your position (a few percent of
+contract value). <span class="term">Mark-to-market</span> — each day the exchange revalues your position
+and moves cash between your account and the counterparty's, so gains and losses are realised daily.</p>
+<span class="use">The backtests assume a $50,000 notional book and charge realistic margin-free P&amp;L per
+1-lot spread; leverage/margin limits are noted as a Phase-2 item.</span>
+
+<h3 id="settle">A4 · Settlement: physical vs cash</h3>
+<p><span class="term">Physically settled</span> — at expiry the short delivers the actual asset (many
+commodity contracts). <span class="term">Cash settled</span> — no asset moves; the contract pays the
+difference versus a settlement price. Index futures (NIFTY) and Deribit crypto futures are cash settled.</p>
+
+<h3 id="basis">A5 · Basis</h3>
+<p><span class="term">Basis</span> = Futures price − Spot price. <span class="term">Basis %</span> =
+(Futures − Spot) / Spot. Positive basis → futures above spot; negative → below.</p>
+<pre>basis      = F  −  S
+basis_pct  = (F − S) / S
+annualised = (F / S − 1) × 365 / days_to_expiry   ← comparable across maturities</pre>
+<span class="use">Gold: <code>basis = contract − nearest contract</code> (no cash feed). Crypto:
+<code>basis = dated future − index</code>, and separately <code>perp basis = perp − index</code>
+(reported in basis points).</span>
+
+<h3 id="carry">A6 · Cost of carry (the r, s, y, T model)</h3>
+<p><span class="term">Carry</span> — the net cost of holding exposure to the asset until a future date.
+The no-arbitrage fair futures price is:</p>
+<pre>F(T) = S × (1 + (r + s − y) × T)          (simple form)
+F(T) = S × exp((r + s − y) × T)          (continuous form the engine fits)</pre>
+<table>
+<tr><th>Symbol</th><th>Name</th><th>Meaning</th></tr>
+<tr><td><code>S</code></td><td>spot</td><td>price of the asset now</td></tr>
+<tr><td><code>r</code></td><td>financing rate</td><td>interest cost of the money to buy and hold the asset (per year)</td></tr>
+<tr><td><code>s</code></td><td>storage</td><td>storage + insurance cost for a physical commodity (per year); ≈ 0 for crypto/index</td></tr>
+<tr><td><code>y</code></td><td>convenience yield</td><td>benefit of holding the <em>physical</em> asset now — dividends for an index, scarcity premium for a commodity (per year)</td></tr>
+<tr><td><code>T</code></td><td>time to expiry</td><td>in <strong>years</strong> (90 days → T = 0.2466)</td></tr>
+</table>
+<p>Read it as: <em>futures price = spot, pushed up by what it costs to carry, pushed down by what you
+give up by not holding the real thing.</em> The single number <code>(r + s − y)</code> is the
+<span class="term">net carry rate</span>; it sets the slope of the whole curve.</p>
+<span class="use"><code>src/fairvalue.py</code> fits <code>ln F = a + c·T</code> across all contracts each day.
+The slope <code>c</code> is the <strong>implied carry rate</strong>; <code>exp(a)</code> is an implied spot.
+Gold's fit R² ≈ 0.999 (the carry model explains gold's curve almost perfectly). For crypto the carry
+analogue is the funding rate (A13).</span>
+
+<h3 id="contango">A7 · Contango &amp; backwardation</h3>
+<p><span class="term">Contango</span> — later-dated futures priced <em>above</em> nearer ones (upward curve);
+the normal state when carrying costs dominate (gold, most of crypto in this sample).
+<span class="term">Backwardation</span> — later-dated <em>below</em> nearer (downward curve); happens when
+there is a strong benefit to holding the physical <em>now</em> (shortage, squeeze, high dividends).</p>
+
+<h3 id="calspread">A8 · Calendar spread</h3>
+<p><span class="term">Calendar spread</span> (a.k.a. time spread) — the price of one expiry minus another
+of the <em>same</em> underlying. Convention here: <code>later − earlier</code>, so positive = contango.</p>
+<div class="callout"><strong>Why spreads are the heart of the engine.</strong> A calendar spread is a paired
+position: long one expiry, short another. When the whole market jumps, both legs move together and the
+common move <em>cancels</em>. What is left is the <em>shape</em> of the curve — a much quieter, more
+mean-reverting quantity than an outright price. Gold's calendar spreads have std ≈ $4 while the price
+level swings by hundreds of dollars.</div>
+<span class="use">Gold trades four adjacent spreads (<code>cs_Z_V</code>, <code>cs_G_Z</code>,
+<code>cs_J_G</code>, <code>cs_M_J</code>). Crypto trades <code>qbasis_&lt;T&gt; = dated future − perp</code>,
+the direct analogue.</span>
+
+<h3 id="curve">A9 · Term structure / futures curve</h3>
+<p><span class="term">Futures curve / term structure</span> — the set of futures prices across all available
+expiries at one moment, plotted against time to expiry. Compare curves across dates by
+<em>days-to-expiry</em>, never by calendar month (a "March contract" means something different depending
+on today's date).</p>
+<span class="use"><code>src/curve.py</code> cleans the raw data (drops zero-volume placeholder rows), joins
+every contract into a date×contract panel, and attaches each contract's <code>T</code>. The sorted
+(T, price) sequence for a date <em>is</em> that day's curve.</span>
+
+<h3 id="lsc">A10 · Level, slope, curvature</h3>
+<table>
+<tr><th>Factor</th><th>Meaning</th><th>Measure used</th></tr>
+<tr><td><span class="term">Level</span></td><td>the whole curve higher/lower</td><td>mean of the contract prices</td></tr>
+<tr><td><span class="term">Slope</span></td><td>steepness of contango/backwardation</td><td><code>(F_far − F_near)/(T_far − T_near)</code>, $ per year</td></tr>
+<tr><td><span class="term">Curvature</span> (butterfly)</td><td>the belly vs a straight line from near to far</td><td><code>F(belly) − line_at_belly</code></td></tr>
+</table>
+<p>Almost every curve move is one of these three. <code>slope</code> is essentially the sum of the
+adjacent calendar spreads, so it is <em>not</em> independent information from them — feeding both to a
+model double-counts. Curvature <em>is</em> largely independent.</p>
+
+<h3 id="roll">A11 · Roll yield / roll-down</h3>
+<p><span class="term">Roll yield</span> — the gain or loss from replacing an expiring contract with a
+later one. In contango a <em>long</em> pays the spread to roll (negative roll yield); a <em>short</em>
+collects it. As a contract ages, its price rolls down the curve toward spot ("roll-down").</p>
+<span class="use">Shorting a crypto quarterly basis and holding it collects roll-down — but the
+harvest-vs-gated backtest (D7) shows roll-down <em>alone</em> loses money after fees; timing is what
+makes it pay.</span>
+
+<h3 id="conv">A12 · Convenience yield</h3>
+<p><span class="term">Convenience yield</span> (<code>y</code> in A6) — the non-cash benefit of holding the
+physical asset now rather than a claim on it later: being able to use it, sell into a shortage, or meet
+a delivery obligation. High convenience yield pulls the curve toward backwardation. Gold's is ≈ 0,
+which is why its carry fit is so clean.</p>
+
+<h3 id="perp">A13 · Perpetual swap &amp; funding rate</h3>
+<p><span class="term">Perpetual swap ("perp")</span> — a crypto futures contract with <em>no expiry</em>.
+To keep its price tethered to spot, longs and shorts exchange a <span class="term">funding rate</span>
+every 8 hours: when the perp trades above the index, longs pay shorts (positive funding), and vice
+versa.</p>
+<p>Funding is the crypto <strong>carry rate</strong>. Annualised: <code>funding_ann ≈ funding_8h × 3 × 365</code>.
+A dated crypto future should sit above the index by roughly <code>index × funding_ann × T</code>.</p>
+<span class="use"><code>fair_qbasis = index × funding_ann_7d × T</code> is the engine's fair value for how
+much a dated crypto future should exceed the perp. The gap between the real premium and this fair value
+is the tradeable signal.</span>
+
+<h3 id="cbasis">A14 · Perp basis &amp; quarterly basis</h3>
+<p><span class="term">Perp basis</span> = perp − index (small, in basis points; reflects instantaneous
+funding pressure). <span class="term">Quarterly basis</span> = dated future − index, usually expressed
+annualised. <span class="term">qbasis</span> in this project = dated future − perp — the premium of the
+quarterly over the perpetual, which is what you actually trade in a perp-vs-quarterly basis trade.</p>
+
+<div class="pagebreak"></div>
+<!-- ============================================================= -->
+<h2 id="partB">B · Statistics concepts</h2>
+
+<h3 id="rolling">B1 · Rolling window &amp; point-in-time</h3>
+<p><span class="term">Rolling window</span> — a statistic (mean, std) computed over the last <em>N</em>
+observations, recomputed each day. <span class="term">Point-in-time (PIT)</span> — every number available
+on day <em>t</em> uses only data from day <em>t</em> or earlier. The engine lags rolling stats by one day:
+<code>series.rolling(N).mean().shift(1)</code>.</p>
+
+<h3 id="lookahead">B2 · Look-ahead bias</h3>
+<p><span class="term">Look-ahead bias</span> — accidentally using information that would not have been
+known at the time (tomorrow's price, a full-sample mean, a model trained on the test period). It is the
+single most common way a backtest lies. Every rolling statistic here is shifted; every ML model is
+retrained walk-forward; fair value uses only that day's cross-section of prices.</p>
+
+<h3 id="zscore">B3 · Z-score &amp; mean reversion</h3>
+<p><span class="term">Z-score</span> — how far a value sits from its recent mean, in standard-deviation
+units: <code>z = (x − rolling_mean) / rolling_std</code>. |z| ≈ 2 is a roughly 1-in-20 reading if the
+series were Gaussian and independent (it usually isn't).</p>
+<p><span class="term">Mean reversion</span> — the tendency of a series to return toward its average after
+straying. A spread that mean-reverts can be faded; one that <em>trends</em> cannot.</p>
+<div class="callout warn"><strong>A large z-score is not a trade — it is an investigation signal.</strong>
+The engine's convergence study found gold's spreads had <code>p_revert &lt; 0.5</code> in every z bucket
+over the sample: they trended, they did not revert. Fading them lost money. Measuring this instead of
+assuming mean reversion is the point.</div>
+
+<h3 id="ou">B4 · AR(1) / Ornstein-Uhlenbeck &amp; half-life</h3>
+<p><span class="term">AR(1)</span> — a series where today = ρ × yesterday + noise (after subtracting the
+mean). If 0 &lt; ρ &lt; 1 the series mean-reverts. The continuous version is the
+<span class="term">Ornstein-Uhlenbeck (OU)</span> process.</p>
+<p><span class="term">Half-life</span> = −ln(2) / ln(ρ) — the number of days to close half the gap to the
+mean. Gold's calendar-spread half-lives were 26–46 days (slow). A signal with a 35-day half-life and a
+10-day holding period only expects to capture ~18% of its gap.</p>
+
+<h3 id="rv">B5 · Realised volatility</h3>
+<p><span class="term">Realised volatility</span> — the standard deviation of recent daily returns,
+scaled to a yearly figure: <code>std(daily log returns, 20d) × √252</code> (×√365 for crypto). A measure
+of how turbulent the market is right now.</p>
+
+<h3 id="regime">B6 · Regime</h3>
+<p><span class="term">Regime</span> — a label for the current market state: calm / normal / stressed
+(from a point-in-time percentile of realised vol), trending / range (from the 20-day return), and for
+crypto a funding regime (hot / neutral / negative). Relationships that hold in one regime break in
+another, so signals are conditioned on it.</p>
+
+<h3 id="r2">B7 · R² (goodness of fit)</h3>
+<p><span class="term">R²</span> — the fraction of a series' variation explained by a model; 1.0 = perfect,
+0 = no better than the mean. Gold's daily carry-curve fit has R² ≈ 0.9993 — the cost-of-carry model
+essentially <em>is</em> the gold curve, which is why residual mispricings are tiny.</p>
+
+<h3 id="corr">B8 · Correlation &amp; collinearity</h3>
+<p><span class="term">Correlation</span> — how tightly two series move together (−1 to +1).
+<span class="term">Collinearity</span> — when model inputs are near-duplicates of each other (e.g. slope
+and the sum of the spreads). It makes linear models unstable and their coefficients meaningless; the
+engine drops <code>slope_ann</code> from the ML features for exactly this reason.</p>
+
+<h3 id="pca">B9 · PCA (factor structure)</h3>
+<p><span class="term">Principal Component Analysis</span> — finds the few underlying "directions" a set of
+correlated series moves along. Gold's four calendar spreads share one driver (the net carry rate), so a
+first component would explain ~90%+ of their variance and look like "all spreads widen/narrow together."
+Modelling 1–2 factors instead of 4–10 spreads reduces overfitting. (Implemented as a descriptive
+KMeans cluster today; full PCA is a Phase-2 item.)</p>
+
+<div class="pagebreak"></div>
+<!-- ============================================================= -->
+<h2 id="partC">C · Modelling concepts</h2>
+
+<h3 id="fairvalue">C1 · Fair value &amp; the carry fit</h3>
+<p><span class="term">Fair value</span> — a model estimate of what a contract or spread <em>should</em>
+be worth. Here: fit <code>ln F = a + c·T</code> across the whole curve each day (ordinary least squares).
+<code>c</code> = implied carry rate, <code>exp(a + c·T)</code> = fair price of each contract,
+<code>actual − fair</code> = the deviation. For crypto, fair value of the quarterly premium is
+<code>index × funding_ann_7d × T</code>.</p>
+
+<h3 id="twoz">C2 · z_hist vs z_fair — the key distinction</h3>
+<table>
+<tr><th></th><th><code>z_hist</code></th><th><code>z_fair</code></th></tr>
+<tr><td>Question</td><td>"far from its own recent average?"</td><td>"far from what the carry / funding model says it should be?"</td></tr>
+<tr><td>Fails when…</td><td>the fair level genuinely moved (rates rose) — flags a false anomaly</td><td>the model is wrong or mis-specified</td></tr>
+<tr><td>Verdict</td><td>weak — a rolling mean is a stale benchmark</td><td>the cleaner anomaly signal</td></tr>
+</table>
+<div class="callout"><strong>Worked example (Gold, 2026-09-04).</strong> Every calendar spread showed
+<code>z_hist ≈ +1.3</code> ("spreads look wide"). But <code>z_carry = +1.6</code> — the carry rate
+itself had risen — and <code>z_fair ≈ ±0.4</code>. Conclusion: the steepness was a <em>real carry move,
+not a mispricing.</em> A naive z-score system would have flagged a trade and been wrong.</div>
+
+<h3 id="mldata">C3 · Features, target, train/test, walk-forward</h3>
+<p><span class="term">Feature</span> — an input the model sees (z-scores, curvature, carry rate,
+realised vol, days-to-expiry, 5-day momentum…). <span class="term">Target</span> — what it predicts:
+here the <em>change in each calendar spread over the next 10 trading days</em>.</p>
+<p><span class="term">Walk-forward validation</span> — train on an expanding window of the past, predict
+the next block, step forward, retrain. Never train on data that comes after the prediction date. This is
+the honest way to measure a time-series model; a random train/test split leaks the future.</p>
+
+<h3 id="models">C4 · OU, Ridge, Gradient Boosting</h3>
+<table>
+<tr><th>Model</th><th>What it is</th><th>Gold OOS result</th></tr>
+<tr><td><span class="term">OU</span></td><td>analytic mean-reversion: predict −(1−ρ<sup>H</sup>)×(gap to mean)</td><td>no skill (hit 0.38) — spreads trended</td></tr>
+<tr><td><span class="term">Ridge</span></td><td>linear regression with an L2 penalty that shrinks coefficients toward zero (controls overfitting)</td><td>no skill (hit 0.44)</td></tr>
+<tr><td><span class="term">Gradient Boosting (GBR)</span></td><td>an ensemble of small decision trees, each correcting the last one's errors; captures non-linear interactions</td><td><strong>weak positive skill</strong> (hit 0.54, corr 0.19)</td></tr>
+<tr><td><span class="term">Ensemble</span></td><td>average of models</td><td>washed out by the weak linear models</td></tr>
+</table>
+<span class="use">Only GBR is used as a live tilt, and only as a weak prior — with ~240 days of data
+it is "a nudge, not a crystal ball."</span>
+
+<h3 id="overfit">C5 · Overfitting, regularisation, bias-variance</h3>
+<p><span class="term">Overfitting</span> — a model that memorises noise in the training data and fails
+out-of-sample. <span class="term">Regularisation</span> — deliberately constraining a model (L2 penalty,
+shallow trees, few features) to prevent that. <span class="term">Bias-variance trade-off</span> — too
+simple a model is biased (misses real structure); too complex a model has high variance (fits noise).
+Small samples (241–400 days here) force simple models.</p>
+
+<h3 id="mlmetrics">C6 · Hit rate, correlation, MAE</h3>
+<p><span class="term">Hit rate</span> — fraction of predictions with the correct sign; 0.50 = coin flip.
+<span class="term">Correlation</span> of predicted vs realised change — directional strength.
+<span class="term">MAE</span> (mean absolute error) — average size of the miss, in the target's units.</p>
+
+<div class="pagebreak"></div>
+<!-- ============================================================= -->
+<h2 id="partD">D · Trading concepts</h2>
+
+<h3 id="sigcand">D1 · Signal vs trade candidate</h3>
+<p><span class="term">Signal</span> — evidence that a relationship is statistically or economically
+abnormal. <span class="term">Trade candidate</span> — a signal that <em>also</em> survives cost, regime,
+liquidity, days-to-expiry and model-agreement filters, with positive expected net edge.
+<strong>"The contracts are close" is never itself a signal.</strong></p>
+
+<h3 id="direction">D2 · Direction: fade vs follow</h3>
+<p><span class="term">Fade</span> — bet the deviation reverts (short a rich spread, long a cheap one).
+<span class="term">Follow</span> — bet the move continues (trade with a momentum forecast). The engine
+fades the fair-value gap by default; a separate backtest strategy (D) tries following the GBR forecast.</p>
+<p>"Long the calendar spread" = buy the later-dated leg, sell the earlier one; profit if the spread
+widens. "Short the spread" = the reverse; profit if it narrows.</p>
+
+<h3 id="costmodel">D3 · Transaction-cost model</h3>
+<p>Yahoo/Deribit give no live bid/ask, so cost is modelled from tick size and a liquidity tier:</p>
+<pre>one-way cost per contract = half the bid-ask spread + slippage + commission
+gold  : bid-ask 1–4 ticks ($10/tick) by liquidity tier + 0.5-tick slippage + $2.50
+crypto: ~4 basis points of notional per leg (Deribit-style taker fee)
+a calendar-spread round trip touches 2 legs, in and out = 4 fills</pre>
+<span class="use">Gold round-trip ≈ 1.1 "gold points" per spread vs a spread std of ~4 points — costs
+eat most of any edge. Crypto round-trip ≈ $126 on an $80k notional — small relative to basis moves of
+2–5%, but fatal if you overtrade (see D7).</span>
+
+<h3 id="netedge">D4 · Expected net edge, regime multiplier, model agreement</h3>
+<pre>expected_gross = 0.5 × |fair-value gap|          (expect to close ~half the gap)
+expected_net   = expected_gross − round-trip cost (− funding carry, for crypto)
+regime_mult    = 1.0 calm/normal ; ×0.5 stressed ; ×0.6 strong trend
+model_agree    = does the GBR forecast point the same way? (×1.0 yes / ×0.45 no)
+adj_net        = expected_net × regime_mult × model_agree factor</pre>
+
+<h3 id="score">D5 · Signal score (0–100)</h3>
+<p>A weighted blend used only for <em>ranking</em>: conviction (|z_fair|), model agreement, liquidity
+tier, days-to-expiry comfort, and the size of the adjusted net edge. A score of 87/100 is a
+decision-support ranking, <strong>not</strong> a probability of profit.</p>
+
+<h3 id="risk">D6 · Position sizing, stop, max hold</h3>
+<p>One position per spread, at most 3 concurrent. Exit on: reversion (<code>|z| &lt; 0.4</code>),
+maximum hold (25–30 days), an adverse stop, or the near leg approaching expiry. Sizing is 1 lot in the
+MVP; score-scaled sizing and portfolio risk limits are Phase-2.</p>
+
+<h3 id="harvest">D7 · Harvest vs gated (why the filter matters)</h3>
+<div class="callout good"><strong>The cleanest proof the engine adds value.</strong> On BTC, two
+backtests over the same period, same exits, same costs:
+<table>
+<tr><th>Strategy</th><th>Trades</th><th>Win %</th><th>P&amp;L / $50k</th><th>Profit factor</th><th>Sharpe</th><th>Max DD</th></tr>
+<tr><td>Harvest — short <em>every</em> contango basis</td><td>187</td><td>29%</td><td class="kpi">−17.7%</td><td>0.75</td><td>−0.80</td><td>−$15,633</td></tr>
+<tr><td>Gated — only when <code>z_gap ≥ 1.25</code></td><td>29</td><td>65%</td><td class="kpi">+14.1%</td><td>1.68</td><td>0.84</td><td>−$7,115</td></tr>
+</table>
+Blindly harvesting the basis <em>loses</em> — you pay fees and funding constantly and get run over when
+the basis widens. Entering only when a dated future is <em>statistically rich versus funding</em> turns
+it positive. The signal, not the roll-down, is the edge.</div>
+
+<div class="pagebreak"></div>
+<!-- ============================================================= -->
+<h2 id="partE">E · Backtesting concepts</h2>
+
+<h3 id="eventbt">E1 · Event backtest &amp; walk-forward</h3>
+<p><span class="term">Event backtest</span> — step through history day by day; each day, close positions
+whose exit conditions are met and open new ones from that day's candidates (ranked by score, capped at
+3). Equity is marked daily (realised P&amp;L + open mark-to-market). All decision inputs are
+point-in-time.</p>
+
+<h3 id="biases">E2 · The three biases that kill backtests</h3>
+<ul>
+<li><span class="term">Look-ahead bias</span> — using future information (see B2). Guarded by lagging every rolling stat and retraining walk-forward.</li>
+<li><span class="term">Survivorship bias</span> — testing only on instruments/contracts that still exist. Guarded by using each contract only over the dates it actually traded.</li>
+<li><span class="term">Data leakage</span> — the target or test period bleeding into training. Guarded by an expanding-window split with the target horizon respected.</li>
+</ul>
+
+<h3 id="btmetrics">E3 · Every backtest metric, defined</h3>
+<table>
+<tr><th>Metric</th><th>Meaning</th><th>Rule of thumb</th></tr>
+<tr><td>Total P&amp;L</td><td>sum of trade results, USD</td><td>positive, obviously — but see sample size</td></tr>
+<tr><td>Return on $50k</td><td>total P&amp;L ÷ assumed book</td><td>context for the P&amp;L number</td></tr>
+<tr><td>Win rate</td><td>fraction of trades that made money</td><td>&gt; 0.5 helps but a low-win / big-winner profile can still work</td></tr>
+<tr><td>Avg win / avg loss</td><td>mean P&amp;L of winners vs losers</td><td>winners should not be dwarfed by losers</td></tr>
+<tr><td>Profit factor</td><td>gross profit ÷ gross loss</td><td>&gt; 1 = profitable; &gt; 1.5 = decent; &lt; 1 = loses</td></tr>
+<tr><td>Sharpe (annualised)</td><td>mean daily P&amp;L ÷ its std, ×√252 (×√365 crypto)</td><td>&gt; 1 good, &gt; 2 strong — <em>but meaningless on &lt; ~30 trades</em></td></tr>
+<tr><td>Sortino</td><td>like Sharpe but only penalises downside volatility</td><td>&gt; Sharpe usually</td></tr>
+<tr><td>Max drawdown</td><td>largest peak-to-trough equity fall</td><td>can you stomach it? BTC gated: −$7,115</td></tr>
+<tr><td>Avg hold days</td><td>mean time in a trade</td><td>should match the signal's half-life</td></tr>
+</table>
+<div class="callout warn"><strong>Sample-size caveat.</strong> Gold: 241 trading days, 15–37 trades per
+strategy. Crypto: ~400 days, one funding regime, ~30 gated trades. These numbers are
+<em>directional evidence</em>, not validated estimates. A Sharpe of 0.84 on 29 trades has a wide
+confidence interval that includes zero.</div>
+
+<div class="pagebreak"></div>
+<!-- ============================================================= -->
+<h2 id="partF">F · The pipeline, module by module</h2>
+<table>
+<tr><th>File</th><th>Blueprint</th><th>Input → Output</th><th>Terms it produces</th></tr>
+<tr><td><code>src/fetch_data.py</code></td><td>§7</td><td>Yahoo → <code>data/raw/*.csv</code> (immutable)</td><td>OHLCV per gold contract + front anchor</td></tr>
+<tr><td><code>src/contracts.py</code></td><td>§8</td><td>symbol → object</td><td>underlying, expiry, days-to-expiry, T</td></tr>
+<tr><td><code>src/curve.py</code></td><td>§9</td><td>raw → <code>curve_long.csv</code></td><td>cleaned date×contract panel with T</td></tr>
+<tr><td><code>src/features.py</code></td><td>§10</td><td>panel → <code>features.csv</code></td><td>basis, calendar spreads, slope, curvature, level</td></tr>
+<tr><td><code>src/fairvalue.py</code></td><td>§12</td><td>panel → <code>fairvalue.csv</code></td><td>implied carry rate, fair curve, fair spreads, deviations, fit R²</td></tr>
+<tr><td><code>src/deviation.py</code></td><td>§11</td><td>features + fair → <code>deviation.csv</code></td><td><code>z_hist</code>, <code>z_fair</code>, <code>z_carry</code>, anomaly flags</td></tr>
+<tr><td><code>src/regime.py</code></td><td>§17</td><td>panel → <code>regime.csv</code></td><td>realised vol, calm/normal/stressed, trend, cluster</td></tr>
+<tr><td><code>src/convergence.py</code></td><td>§27,§29</td><td>features + dev → <code>convergence.csv</code></td><td>AR(1) half-life, empirical reversion table by z bucket</td></tr>
+<tr><td><code>src/predict.py</code></td><td>§14,§16</td><td>all → <code>predictions.csv</code></td><td>walk-forward OU / Ridge / GBR forecast of 10-day spread change</td></tr>
+<tr><td><code>src/signals.py</code></td><td>§18,§19</td><td>all → <code>signals.csv</code></td><td>fair gap, direction, cost, regime mult, adj-net edge, score, trade_candidate</td></tr>
+<tr><td><code>src/backtest.py</code></td><td>§20</td><td>signals → <code>data/output/bt_*</code></td><td>4 strategies, equity curves, all metrics in E3</td></tr>
+<tr><td><code>src/pipeline.py</code></td><td>§6</td><td>—</td><td>runs the whole gold chain (~3 s)</td></tr>
+<tr><td><code>app/dashboard.py</code></td><td>§22</td><td>reads outputs</td><td>Streamlit product view; sidebar market selector</td></tr>
+<tr><td><code>src/monitor.py</code></td><td>§22</td><td>refresh → <code>alerts.json</code></td><td>deviation / trade-candidate / curve-flip alerts</td></tr>
+<tr><td><code>src/crypto/fetch_crypto.py</code></td><td>§5,§7</td><td>Deribit → <code>data/crypto/&lt;CCY&gt;/raw</code></td><td>perp + dated OHLC, index, funding rate</td></tr>
+<tr><td><code>src/crypto/engine.py</code></td><td>§9–20</td><td>raw → <code>data/crypto/&lt;CCY&gt;/{clean,output}</code></td><td><code>qbasis</code>, funding fair value, gap, <code>z_gap</code>, funding regime, signals, harvest-vs-gated backtest</td></tr>
+<tr><td><code>src/crypto_pipeline.py</code></td><td>—</td><td>—</td><td>fetch + analyse BTC and ETH</td></tr>
+</table>
+
+<div class="pagebreak"></div>
+<!-- ============================================================= -->
+<h2 id="partG">G · Results — is it profitable?</h2>
+
+<h3>Gold (COMEX) — 241 trading days</h3>
+<ul>
+<li>Cost-of-carry model explains the curve to <strong>R² ≈ 0.999</strong>; implied carry 4.0–4.7%/yr — economically sane.</li>
+<li>Convergence study: spreads <strong>trended, did not revert</strong> (<code>p_revert &lt; 0.5</code> in every z bucket).</li>
+<li>Backtest, four strategies:</li>
+</ul>
+<table>
+<tr><th>Strategy</th><th>Trades</th><th>Win %</th><th>P&amp;L / $50k</th><th>Profit factor</th><th>Sharpe</th></tr>
+<tr><td>A — naive <code>z_hist</code> fade</td><td>37</td><td>22%</td><td>−8.3%</td><td>0.19</td><td>−2.17</td></tr>
+<tr><td>B — fair-value fade</td><td>24</td><td>33%</td><td>−3.6%</td><td>0.36</td><td>−2.18</td></tr>
+<tr><td>C — gated (full discipline)</td><td>15</td><td>47%</td><td>−1.2%</td><td>0.60</td><td>−0.77</td></tr>
+<tr><td>D — trade with the GBR forecast</td><td>63</td><td>32%</td><td>−8.3%</td><td>0.29</td><td>−1.54</td></tr>
+</table>
+<p><strong>Verdict: not profitable on gold, and the engine correctly says so ("stand aside").</strong>
+Gold's curve is efficiently priced; residual mispricings (~2 pts) do not clear costs (~1.1 pts). The
+value delivered is rigorous measurement and capital protection: each discipline layer cuts the loss,
+and the naive strategy loses roughly <strong>7× more</strong> than the gated one.</p>
+
+<h3>BTC (Deribit) — ~400 days, one funding regime</h3>
+<table>
+<tr><th>Strategy</th><th>Trades</th><th>Win %</th><th>P&amp;L / $50k</th><th>Profit factor</th><th>Sharpe</th><th>Max DD</th></tr>
+<tr><td>Harvest — every contango basis</td><td>187</td><td>29%</td><td>−17.7%</td><td>0.75</td><td>−0.80</td><td>−$15,633</td></tr>
+<tr><td>Gated — <code>z_gap ≥ 1.25</code></td><td>29</td><td>65%</td><td><strong>+14.1%</strong></td><td>1.68</td><td>0.84</td><td>−$7,115</td></tr>
+</table>
+<p><strong>Verdict: a real but modest edge, conditional on selectivity.</strong> The gated strategy is
+profitable in-sample with profit factor 1.68; the harvest baseline proves the z-score filter — not
+roll-down — is what makes it work. Caveats: Sharpe &lt; 1, a −$7k drawdown on a $50k book, only 29
+trades, and a single year that was mostly one funding regime. This needs out-of-sample and paper-trade
+validation before real capital.</p>
+
+<h3>ETH (Deribit) — ~400 days</h3>
+<table>
+<tr><th>Strategy</th><th>Trades</th><th>Win %</th><th>P&amp;L / $50k</th><th>Profit factor</th><th>Sharpe</th></tr>
+<tr><td>Harvest</td><td>165</td><td>35%</td><td>−0.1%</td><td>0.97</td><td>−0.09</td></tr>
+<tr><td>Gated</td><td>33</td><td>64%</td><td>+0.7%</td><td>2.26</td><td>1.15</td></tr>
+</table>
+<p><strong>Verdict: essentially flat.</strong> ETH's curve sits very close to funding-fair value
+(carry-vs-funding gap only ~0.5%), so even the gated strategy captures almost nothing after fees. The
+engine correctly issues few or no candidates. This is a feature: it does not manufacture trades where
+none exist.</p>
+
+<h3 id="whatprofitable">What "profitable" means here, and the conditions</h3>
+<ul>
+<li>All figures are <strong>in-sample, single-period, small-N</strong>. "Profitable" here means "showed
+positive net P&amp;L after modelled costs on the available history" — a hypothesis, not a track record.</li>
+<li>The BTC edge would likely <strong>persist</strong> if: funding-vs-basis dislocations keep recurring
+(they have historically), fees stay near 4 bps/leg, and the strategy stays selective (~2–4 trades/month).</li>
+<li>It would likely <strong>decay</strong> if: crypto term structure becomes as efficient as gold's,
+funding regimes shift and stay shifted, or position size grows enough to move the thinner dated
+contracts.</li>
+<li>Gold is a standing example of an efficiently-priced curve where the correct output is <em>no
+trade</em>. That the engine reaches that conclusion — rather than curve-fitting a fake winner — is the
+main evidence it is built honestly.</li>
+</ul>
+
+<div class="pagebreak"></div>
+<!-- ============================================================= -->
+<h2 id="partH">H · How to use it</h2>
+<pre>pip install -r requirements.txt
+
+python demo.py                     # runs gold + crypto, prints the results table
+python src/pipeline.py             # gold only: fetch → … → backtest  (~3 s cached)
+python src/crypto_pipeline.py      # BTC + ETH via Deribit (no API key)
+python -m streamlit run app/dashboard.py   # product view — sidebar: Gold / BTC / ETH
+python src/monitor.py --no-refresh # gold alert digest → data/output/alerts.json
+
+# or:  make setup | make demo | make gold | make crypto | make dashboard | make test</pre>
+<p><strong>Dashboard tabs.</strong> Gold: Curve &amp; Fair Value · Spreads &amp; Deviation · Regime ·
+Signals · Backtest · Convergence. Crypto: Curve &amp; Funding · Basis vs Funding · Signals · Backtest
+(harvest vs gated).</p>
+<p><strong>Reading a verdict.</strong> "STAND ASIDE" = no relationship is abnormal enough, or expected
+edge does not clear costs. "TRADE CANDIDATE" = a ranked list with direction, score, and expected net
+$/lot — evidence to investigate, not an instruction.</p>
+<p><strong>Extending to a new market</strong> (Silver, NIFTY, …): add a fetch adapter that writes the
+same <code>data/raw</code> CSV schema; add the contract's month-code and expiry rule to
+<code>src/contracts.py</code>; for anything with a funding rate, add it as a feature and a carry term.
+Everything downstream is unchanged.</p>
+
+<h2 id="partI">I · Limitations &amp; risks</h2>
+<ul>
+<li><strong>Data.</strong> Free sources only. Gold has no true cash feed (nearest contract used as
+anchor); no open interest from Yahoo. Crypto history is ~1 year and one funding regime.</li>
+<li><strong>Sample size.</strong> 15–40 trades per backtest. Statistical error bars are large; a
+positive Sharpe here is not significant at any conventional level.</li>
+<li><strong>Costs.</strong> Modelled from tick size / fee schedules, not live bid-ask. Real slippage in
+thin dated contracts could be worse.</li>
+<li><strong>No live validation.</strong> Nothing here has been paper-traded or run forward.</li>
+<li><strong>Model risk.</strong> The carry and funding fair-value models are simplifications; a regime
+they were not fit on can break them.</li>
+<li><strong>Execution.</strong> Margin, leverage limits, funding settlement timing, and exchange outages
+are not modelled in the MVP backtest.</li>
+</ul>
+<div class="callout warn"><strong>Disclaimer.</strong> This is a research and decision-support system.
+It is not investment advice and makes no promise of profit. Validate every result out-of-sample and
+paper-trade before risking capital. Trading futures involves substantial risk of loss.</div>
+
+<div class="pagebreak"></div>
+<h2 id="glossary">J · One-line glossary</h2>
+<table>
+<tr><td><strong>Spot</strong></td><td>price to transact the asset now</td></tr>
+<tr><td><strong>Future</strong></td><td>agreement to transact at a locked price on a future date</td></tr>
+<tr><td><strong>Expiry</strong></td><td>the date a contract settles</td></tr>
+<tr><td><strong>Convergence</strong></td><td>futures → spot as expiry nears; basis → 0</td></tr>
+<tr><td><strong>Basis</strong></td><td>future − spot</td></tr>
+<tr><td><strong>Carry / cost of carry</strong></td><td>net cost of holding the asset through time = financing + storage − convenience yield</td></tr>
+<tr><td><strong>Convenience yield</strong></td><td>benefit of holding the physical asset now</td></tr>
+<tr><td><strong>Contango / backwardation</strong></td><td>curve sloping up / down</td></tr>
+<tr><td><strong>Calendar spread</strong></td><td>price of one expiry minus another, same underlying</td></tr>
+<tr><td><strong>Term structure / curve</strong></td><td>futures prices across all maturities at one moment</td></tr>
+<tr><td><strong>Level / slope / curvature</strong></td><td>the three ways a curve moves</td></tr>
+<tr><td><strong>Roll yield / roll-down</strong></td><td>gain/loss from replacing an expiring contract; price sliding down the curve</td></tr>
+<tr><td><strong>Perpetual swap</strong></td><td>crypto future with no expiry, tethered by funding</td></tr>
+<tr><td><strong>Funding rate</strong></td><td>periodic payment between perp longs and shorts; the crypto carry rate</td></tr>
+<tr><td><strong>qbasis</strong></td><td>dated crypto future − perpetual</td></tr>
+<tr><td><strong>Fair value</strong></td><td>model estimate of what a price/spread should be</td></tr>
+<tr><td><strong>Implied carry rate</strong></td><td>slope of the fitted <code>ln F</code> vs <code>T</code> line</td></tr>
+<tr><td><strong>Z-score</strong></td><td>distance from mean in standard-deviation units</td></tr>
+<tr><td><strong>z_hist / z_fair</strong></td><td>deviation vs recent history / vs the carry-fair model</td></tr>
+<tr><td><strong>Mean reversion</strong></td><td>tendency to return toward the average</td></tr>
+<tr><td><strong>AR(1) / OU</strong></td><td>simplest mean-reverting process</td></tr>
+<tr><td><strong>Half-life</strong></td><td>days to close half the gap to the mean</td></tr>
+<tr><td><strong>Realised volatility</strong></td><td>annualised std of recent daily returns</td></tr>
+<tr><td><strong>Regime</strong></td><td>label for current market state (calm/stressed, trend/range, funding hot/neutral)</td></tr>
+<tr><td><strong>Point-in-time</strong></td><td>using only information available at the time</td></tr>
+<tr><td><strong>Look-ahead bias</strong></td><td>accidentally using future information</td></tr>
+<tr><td><strong>Walk-forward</strong></td><td>train on the past, test on the next block, repeat</td></tr>
+<tr><td><strong>Ridge</strong></td><td>linear regression with a coefficient-shrinking penalty</td></tr>
+<tr><td><strong>Gradient boosting</strong></td><td>ensemble of small trees, each fixing the last's errors</td></tr>
+<tr><td><strong>Overfitting</strong></td><td>memorising noise; fails out-of-sample</td></tr>
+<tr><td><strong>Hit rate</strong></td><td>fraction of directionally-correct predictions</td></tr>
+<tr><td><strong>Signal vs trade candidate</strong></td><td>abnormality vs abnormality that survives cost/regime/risk filters</td></tr>
+<tr><td><strong>Fade / follow</strong></td><td>bet on reversion / bet on continuation</td></tr>
+<tr><td><strong>Signal score</strong></td><td>0–100 ranking blend; not a probability of profit</td></tr>
+<tr><td><strong>Profit factor</strong></td><td>gross profit ÷ gross loss</td></tr>
+<tr><td><strong>Sharpe / Sortino</strong></td><td>return per unit of total / downside volatility</td></tr>
+<tr><td><strong>Max drawdown</strong></td><td>largest peak-to-trough equity fall</td></tr>
+<tr><td><strong>Harvest vs gated</strong></td><td>trade every basis vs only statistically-rich ones</td></tr>
+</table>
+
+<p class="small">Generated for the Futures Curve Intelligence Engine project. Figures are from the
+in-sample backtests described above and will change as data updates. Research use only.</p>
+
+</body>
+</html>

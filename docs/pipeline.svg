@@ -1,0 +1,109 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1120 640" font-family="-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#8a94a6"/>
+    </marker>
+    <style>
+      .box{rx:8;ry:8;stroke-width:1.5}
+      .t{font-size:13px;fill:#e8ebf0}
+      .s{font-size:10.5px;fill:#9aa4b2}
+      .lbl{font-size:11px;fill:#6b7686;font-weight:600;letter-spacing:.08em}
+      .flow{stroke:#8a94a6;stroke-width:1.6;fill:none;marker-end:url(#a)}
+      .data{fill:#1f2a3a;stroke:#3a4a63}
+      .model{fill:#242036;stroke:#4a3f6b}
+      .sig{fill:#1e3328;stroke:#3c6b4f}
+      .out{fill:#33291c;stroke:#6b5433}
+    </style>
+  </defs>
+  <rect width="1120" height="640" fill="#0f141c"/>
+  <text x="40" y="42" font-size="20" font-weight="700" fill="#f0f2f5">Futures Curve Intelligence Engine</text>
+  <text x="40" y="64" class="s">One pipeline · Gold (COMEX) · BTC · ETH (Deribit) · point-in-time throughout</text>
+
+  <!-- row labels -->
+  <text x="40" y="104" class="lbl">INGEST</text>
+  <text x="40" y="220" class="lbl">CURVE &amp; FEATURES</text>
+  <text x="40" y="356" class="lbl">MODEL</text>
+  <text x="40" y="474" class="lbl">DECIDE</text>
+  <text x="40" y="576" class="lbl">SHIP</text>
+
+  <!-- INGEST -->
+  <g>
+    <rect class="box data" x="40" y="112" width="200" height="56"/>
+    <text class="t" x="54" y="134">fetch_data / fetch_crypto</text>
+    <text class="s" x="54" y="152">Yahoo · Deribit → data/raw/ (immutable)</text>
+    <rect class="box data" x="270" y="112" width="180" height="56"/>
+    <text class="t" x="284" y="134">contracts.py</text>
+    <text class="s" x="284" y="152">symbol → expiry, days, T</text>
+  </g>
+
+  <!-- CURVE & FEATURES -->
+  <g>
+    <rect class="box data" x="40" y="232" width="150" height="56"/>
+    <text class="t" x="54" y="254">curve.py</text>
+    <text class="s" x="54" y="272">clean date×contract panel</text>
+    <rect class="box data" x="210" y="232" width="150" height="56"/>
+    <text class="t" x="224" y="254">features.py</text>
+    <text class="s" x="224" y="272">basis · spreads · slope · curv</text>
+    <rect class="box model" x="380" y="232" width="160" height="56"/>
+    <text class="t" x="394" y="254">fairvalue.py</text>
+    <text class="s" x="394" y="272">carry fit → implied c, R²≈0.999</text>
+    <rect class="box model" x="560" y="232" width="150" height="56"/>
+    <text class="t" x="574" y="254">deviation.py</text>
+    <text class="s" x="574" y="272">z_hist · z_fair · anomalies</text>
+    <rect class="box data" x="730" y="232" width="150" height="56"/>
+    <text class="t" x="744" y="254">regime.py</text>
+    <text class="s" x="744" y="272">calm/normal/stressed</text>
+  </g>
+
+  <!-- MODEL -->
+  <g>
+    <rect class="box model" x="40" y="366" width="200" height="56"/>
+    <text class="t" x="54" y="388">convergence.py</text>
+    <text class="s" x="54" y="406">AR(1) half-life · reversion table</text>
+    <rect class="box model" x="270" y="366" width="240" height="56"/>
+    <text class="t" x="284" y="388">predict.py — walk-forward</text>
+    <text class="s" x="284" y="406">OU · Ridge · GradientBoosting (10-day)</text>
+  </g>
+
+  <!-- DECIDE -->
+  <g>
+    <rect class="box sig" x="40" y="484" width="470" height="58"/>
+    <text class="t" x="54" y="506">signals.py — fair-gap → direction → cost/regime/model gate → score 0–100</text>
+    <text class="s" x="54" y="525">emits a trade candidate only if expected net edge clears cost</text>
+    <rect class="box sig" x="540" y="484" width="340" height="58"/>
+    <text class="t" x="554" y="506">backtest.py — walk-forward, realistic costs</text>
+    <text class="s" x="554" y="525">gold: 4 rules · crypto: harvest vs gated · full metrics</text>
+  </g>
+
+  <!-- SHIP -->
+  <g>
+    <rect class="box out" x="40" y="556" width="220" height="52"/>
+    <text class="t" x="54" y="578">app/dashboard.py</text>
+    <text class="s" x="54" y="596">Streamlit · sidebar market selector</text>
+    <rect class="box out" x="290" y="556" width="220" height="52"/>
+    <text class="t" x="304" y="578">monitor.py → alerts.json</text>
+    <text class="s" x="304" y="596">deviation · candidate · curve-flip</text>
+    <rect class="box out" x="540" y="556" width="180" height="52"/>
+    <text class="t" x="554" y="578">demo.py</text>
+    <text class="s" x="554" y="596">one-command results table</text>
+  </g>
+
+  <!-- flows -->
+  <path class="flow" d="M140 168 V232"/>
+  <path class="flow" d="M360 168 V190 H115 V232"/>
+  <path class="flow" d="M190 260 H210"/>
+  <path class="flow" d="M360 260 H380"/>
+  <path class="flow" d="M540 260 H560"/>
+  <path class="flow" d="M710 260 H730"/>
+  <path class="flow" d="M460 288 V326 H140 V366"/>
+  <path class="flow" d="M635 288 V326 H390 V366"/>
+  <path class="flow" d="M805 288 V440 H430 V484"/>
+  <path class="flow" d="M140 422 V484"/>
+  <path class="flow" d="M390 422 V450 H300 V484"/>
+  <path class="flow" d="M510 513 H540"/>
+  <path class="flow" d="M710 542 V550"/>
+  <path class="flow" d="M275 542 V556"/>
+  <path class="flow" d="M150 542 V556"/>
+
+  <text x="1080" y="628" text-anchor="end" class="s">Research / decision-support only — not investment advice</text>
+</svg>

@@ -1,0 +1,10 @@
+# Futures Curve Intelligence Engine — Python 3.9+
+pandas>=2.0,<3
+numpy>=1.24,<3
+scikit-learn>=1.3
+yfinance>=0.2.40
+streamlit>=1.30
+plotly>=5.18
+
+# dev / tests (optional)
+pytest>=7.0
