@@ -1,6 +1,125 @@
 # Demo Video Script — Futures Curve Intelligence Engine
 
+## OFFICIAL VERSION — matches the submission rubric (up to 5 min)
+
+The hackathon requires the video to clearly cover five things, in order. This version is
+labelled section-by-section so none of them get missed. Total run time ≈ 4:40–5:00.
+
+**Setup (5 min):**
+```bash
+python3 demo.py --skip-fetch
+python3 -m streamlit run app/dashboard.py
+```
+Open Gold tab → open BTC tab once (Backtest sub-tab) to warm it up → switch back to Gold.
+Record **full screen** so you can Cmd+Tab to the terminal without stopping.
+
+---
+
+### 1 · THE PROBLEM (0:00–0:40)
+
+**[Screen: title card or `docs/pipeline.png`]**
+
+> "Every futures market — gold, Bitcoin, the Nifty — trades a *curve*: the same asset,
+> priced differently at different future dates. That curve is a compressed statement of
+> what the market charges to hold the asset through time — financing, storage, dividends,
+> or for crypto, the funding rate.
+>
+> The problem is, most retail trading signals built off that curve are just noise. People
+> see two contract prices that look 'close' or 'far apart' and call it a signal. It isn't.
+> The real question is much harder: given the maturity, the true cost of carry, the current
+> market regime, and the liquidity — is this curve *actually* mispriced, and does the edge
+> survive real trading costs? Nobody was answering that question rigorously, so I built a
+> system that does."
+
+### 2 · HOW THE SOLUTION WORKS (0:40–1:35)
+
+**[Screen: `docs/pipeline.png`, scroll slowly through the flow]**
+
+> "It's one pipeline, applied to three markets — Gold on COMEX, and Bitcoin and Ethereum on
+> Deribit. Five steps.
+>
+> One: it reconstructs the futures curve from raw contract data, cleaned to remove
+> non-trading noise.
+>
+> Two: it fits a *fair value* for that curve from first principles — the actual cost of
+> carrying the asset — not a guess, a regression fitted fresh every single day.
+>
+> Three: it measures how far the real market has drifted from that fair value, as a
+> standardized score, and separately checks if that drift is explained by the market being
+> in a stressed or trending regime.
+>
+> Four: it forecasts the next move and checks whether trading it would even survive fees and
+> slippage.
+>
+> Five: only if all of that lines up does it produce a trade candidate — with a confidence
+> score, not a guarantee."
+
+### 3 · KEY FEATURES (1:35–2:15)
+
+**[Screen: Dashboard, Gold tab, click through 2–3 tabs quickly]**
+
+> "The dashboard shows this live for each market: the curve itself against its fair value,
+> a heatmap of where every spread is statistically stretched, the current market regime, a
+> ranked signal board of trade candidates with their expected cost-adjusted edge, and a full
+> backtest with industry-standard metrics — Sharpe ratio, profit factor, max drawdown. There's
+> also a monitor that watches for new deviations and writes out alerts automatically. Every
+> number here is reproducible from raw data with a single command — nothing is hand-picked."
+
+### 4 · THE ROLE OF AI (2:15–3:10)
+
+**[Screen: Dashboard → any market → the tab showing the model forecast, if visible; otherwise stay on Signals tab]**
+
+> "AI sits in two specific places, and I was deliberate about not overselling it.
+>
+> First, a walk-forward machine-learning model — gradient boosting — forecasts the next
+> ten-day move in each spread. It's trained only on the past, retrained as new days arrive,
+> and I measured its real skill out of sample: about a fifty-four percent hit rate. That's
+> weak but genuinely real skill, not random. Because it's weak, I don't let it drive
+> decisions alone — it only acts as a *confirming filter*: if the model disagrees with a
+> trade, the system automatically sizes it down.
+>
+> Second, unsupervised clustering classifies the market into calm, normal, or stressed
+> regimes, so the system knows when its own assumptions are less reliable.
+>
+> The honest role of AI here isn't to predict the future — it's to add a measured, tested
+> opinion on top of a transparent statistical core, and to know its own limits. That's
+> the difference between an intelligent system and a black box that happens to use AI."
+
+### 5 · LIVE DEMONSTRATION (3:10–4:40)
+
+**[Screen: Dashboard, Gold tab → Backtest tab]**
+
+> "Here it is live. On Gold, the engine's verdict today is *stand aside* — its fair-value
+> fit is ninety-nine-point-nine percent accurate, so there's nothing real to trade. And I
+> can prove that's correct: a naive strategy that fades any statistical wobble gets a Sharpe
+> ratio of minus two and draws down over four thousand dollars. My filtered version cuts
+> that loss from eight percent to about one percent by trading sixty percent less."
+
+**[Switch to BTC tab → Backtest sub-tab]**
+
+> "Now Bitcoin — same engine, different market. It's watching the premium of dated futures
+> over the perpetual swap versus what the funding rate implies. Blindly trading every rich
+> basis: Sharpe minus zero-point-eight, a fifteen-thousand-dollar drawdown, roughly negative
+> sixteen percent a year. Filtering for only the statistically extreme cases: twenty-nine
+> trades, sixty-five percent win rate, Sharpe zero-point-eight-four, and about thirteen
+> percent a year. Same market, same costs — the filter is the entire difference."
+
+**[Cmd+Tab to terminal, run `python3 demo.py --skip-fetch`, let the table print]**
+
+> "And this one command reproduces every number I just showed you, for all three markets,
+> from raw data, in about ten seconds."
+
+**[Back to dashboard or GitHub README, end card: link + disclaimer]**
+
+> "It's in-sample, about a year of data — I'm not claiming a proven track record, I'm
+> showing a rigorous, honest research process that knows when to say no trade. Code and the
+> full write-up are linked below. Thanks for watching."
+
+---
+
 ## LITE VERSION — one continuous take, ~2 min, 3 screens, no editing
+
+Use this only if the 5-minute version above doesn't fit your remaining time.
 
 Use this one if you're short on time. Full multi-scene version with shot list is below it.
 
