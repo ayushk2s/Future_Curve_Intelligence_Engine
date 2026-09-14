@@ -1,5 +1,67 @@
 # Demo Video Script — Futures Curve Intelligence Engine
 
+## LITE VERSION — one continuous take, ~2 min, 3 screens, no editing
+
+Use this one if you're short on time. Full multi-scene version with shot list is below it.
+
+**Setup (5 min):**
+```bash
+python3 demo.py --skip-fetch
+python3 -m streamlit run app/dashboard.py
+```
+Open Gold tab → open BTC tab once (Backtest sub-tab) to warm it, then switch back to Gold —
+that's your starting screen. Record **full screen** so you can Cmd+Tab to the terminal
+without stopping the recording.
+
+**[Screen: Dashboard, Gold tab, verdict + metrics row visible]**
+
+> "Every futures market has a curve — same asset, different prices at different maturities.
+> That curve tells you what it costs to hold the asset over time. I built an engine that
+> checks if that curve is actually mispriced, and whether the edge survives real trading
+> costs.
+>
+> Here it is on Gold, live. The engine's verdict is *stand aside* — the curve fits its
+> fair-value model at ninety-nine-point-nine percent accuracy, so there's nothing real to
+> trade. I can prove that's the right call, not laziness."
+
+**[Click into Backtest tab — strategy table with Sharpe/drawdown visible]**
+
+> "A naive strategy that fades every statistical wobble gets a Sharpe ratio of minus two —
+> Sharpe ratio just means return per unit of risk taken, so a negative Sharpe means it loses
+> money *and* it's volatile doing it. It also draws down over four thousand dollars on a
+> fifty-thousand-dollar book. My filtered version — same market, same period — cuts the
+> loss from eight percent to about one percent, with a much smaller drawdown, by simply
+> trading sixty percent less. The discipline layer is the whole point."
+
+**[Switch to BTC tab → Backtest sub-tab, let the harvest-vs-gated chart + table sit on screen]**
+
+> "Now Bitcoin — same engine, different market. Here it's watching the premium of dated
+> futures over the perpetual swap, versus what the funding rate implies they should be
+> worth.
+>
+> If I blindly short every rich basis, no filtering: Sharpe minus zero-point-eight, a max
+> drawdown of over fifteen thousand dollars — almost a third of the book — and a compound
+> annual growth rate around negative sixteen percent. It loses.
+>
+> If I only trade when it's statistically extreme — this line — twenty-nine trades,
+> sixty-five percent win rate, Sharpe zero-point-eight-four, max drawdown seven thousand,
+> and a CAGR of about thirteen percent. Same market, same costs — the only difference is
+> the filter. That's the actual edge: not the trade, the *selectivity*."
+
+**[Cmd+Tab to terminal, run `python3 demo.py --skip-fetch`, let the table print]**
+
+> "One command reproduces every number I just said — Gold, Bitcoin, Ethereum, all four
+> backtests. It's in-sample, about a year of data, twenty to thirty trades per strategy —
+> I'm not calling this a proven track record, I'm showing an honest research process that
+> knows when to say no trade. Code and the full write-up are linked below. Thanks for
+> watching."
+
+**Timing:** ~2:00–2:10. Do 2–3 takes, keep the smoothest. Trim only the dead air at the
+very start/end — no scene cuts needed.
+
+---
+
+
 Target length: **2:15–2:30** (fits any 2–3 min Devpost cap). A 60-second trim is marked
 at the bottom for a stricter cap — check the AI Builders submission page for the exact limit.
 
